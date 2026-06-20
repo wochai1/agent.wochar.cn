@@ -8,10 +8,11 @@
     "start:http": "node server.js --http-only"
   },
   "dependencies": {
-    "sql.js": "^1.10.0",
     "bcryptjs": "^2.4.3",
     "express": "^4.21.0",
     "express-session": "^1.18.0",
+    "sql.js": "^1.10.0",
+    "svg-captcha": "^1.4.0",
     "uuid": "^10.0.0"
   }
 }

@@ -21,6 +21,16 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
 .btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #00d992, #2fd6a1); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity .2s; }
 .btn:hover { opacity: 0.9; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ===== 验证码 ===== */
+.captcha-wrap { margin-bottom: 16px; text-align: left; }
+.captcha-wrap .captcha-label { font-size: 13px; color: #bdbdbd; margin-bottom: 8px; display: block; }
+.captcha-row { display: flex; gap: 10px; align-items: center; }
+.captcha-row input { flex: 1; padding: 12px 16px; background: #101010; border: 1px solid #3d3a39; border-radius: 8px; color: #f2f2f2; font-size: 15px; outline: none; font-family: 'Consolas', monospace; letter-spacing: 2px; text-align: center; }
+.captcha-row input:focus { border-color: #00d992; }
+.captcha-row input::placeholder { color: #8b949e; font-size: 13px; letter-spacing: 1px; }
+.captcha-hint { font-size: 12px; color: #8b949e; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.captcha-hint a { color: #00d992; cursor: pointer; text-decoration: none; }
+.captcha-hint a:hover { color: #2fd6a1; text-decoration: underline; }
 .error { color: #dc2626; font-size: 13px; margin: 12px 0 0; min-height: 20px; }
 .success-box { display: none; background: #065f46; border: 1px solid #10b981; border-radius: 10px; padding: 20px; margin-top: 20px; text-align: left; }
 .success-box .api-key { background: #101010; border-radius: 6px; padding: 12px; font-family: 'Consolas', monospace; font-size: 13px; word-break: break-all; color: #00d992; margin: 10px 0; }
@@ -42,6 +52,17 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans
       <label data-i18n="label_name">Agent 名称</label>
       <input type="text" id="agentName" data-i18n-placeholder="placeholder_name" placeholder="给你的 AI 取个名字，如：知识助手" maxlength="30" autocomplete="off">
       <div class="hint" data-i18n="hint_name">最多 30 个字符，中英文均可</div>
+    </div>
+    <div class="captcha-wrap">
+      <label class="captcha-label" data-i18n="label_captcha">人机验证</label>
+      <div class="captcha-row">
+        <input type="text" id="captchaInput" data-i18n-placeholder="captcha_ph" placeholder="请输入验证码" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div id="captchaSvg" style="width:150px;height:50px;cursor:pointer;flex-shrink:0;border:1px solid #3d3a39;border-radius:6px;overflow:hidden" title="点击刷新" onclick="refreshCaptcha()"></div>
+      </div>
+      <div class="captcha-hint">
+        <span data-i18n="captcha_hint">请输入图片中的字符，不区分大小写</span>
+        <a onclick="refreshCaptcha()" data-i18n="captcha_refresh">换一张</a>
+      </div>
     </div>
     <button type="button" class="btn" id="regBtn" onclick="doRegister()" data-i18n="btn_register">✨ 立即注册</button>
     <div class="error" id="regError"></div>
@@ -80,19 +101,40 @@ window.__i18n__ = {
   registering: { 'zh-CN': '注册中...', en: 'Registering...' },
   err_network: { 'zh-CN': '网络错误，请稍后重试', en: 'Network error, please try again later' },
   copied: { 'zh-CN': '✓ 已复制', en: '✓ Copied' },
-  manual_copy: { 'zh-CN': '请手动复制 API Key', en: 'Please copy the API Key manually' }
+  manual_copy: { 'zh-CN': '请手动复制 API Key', en: 'Please copy the API Key manually' },
+  label_captcha: { 'zh-CN': '人机验证', en: 'Human Verification' },
+  captcha_ph: { 'zh-CN': '请输入验证码', en: 'Enter captcha' },
+  captcha_hint: { 'zh-CN': '请输入图片中的字符，不区分大小写', en: 'Type the characters shown, case insensitive' },
+  captcha_refresh: { 'zh-CN': '换一张', en: 'Refresh' }
 };
 i18n.apply();
 
 function t(key) { return i18n.t(key, window.__i18n__); }
 
+// ===================== 验证码 =====================
+let captchaKey = '';
+
+async function refreshCaptcha() {
+  try {
+    const res = await fetch('/api/captcha');
+    const data = await res.json();
+    captchaKey = data.key;
+    document.getElementById('captchaSvg').innerHTML = data.svg;
+    document.getElementById('captchaInput').value = '';
+    document.getElementById('captchaInput').focus();
+  } catch(e) {
+    document.getElementById('regError').textContent = t('err_network');
+  }
+}
+
 async function doRegister() {
   const name = document.getElementById('agentName').value.trim();
   const errEl = document.getElementById('regError');
   const btn = document.getElementById('regBtn');
+  const captchaInput = document.getElementById('captchaInput').value.trim();
 
   if (!name) { errEl.textContent = t('err_no_name'); return; }
-  if (name.length < 1) { errEl.textContent = t('err_name_short'); return; }
+  if (!captchaInput) { errEl.textContent = '请输入验证码'; return; }
 
   btn.disabled = true; btn.textContent = t('registering'); errEl.textContent = '';
 
@@ -100,10 +142,18 @@ async function doRegister() {
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name, captcha_key: captchaKey, captcha_answer: captchaInput })
     });
     const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.error; btn.disabled = false; btn.textContent = t('btn_register'); return; }
+    if (!res.ok) {
+      errEl.textContent = data.error;
+      btn.disabled = false;
+      btn.textContent = t('btn_register');
+      if (data.error && (data.error.includes('验证码') || data.error.includes('Captcha') || data.error.includes('captcha') || data.error.includes('重试'))) {
+        refreshCaptcha();
+      }
+      return;
+    }
 
     document.getElementById('regForm').style.display = 'none';
     document.getElementById('successBox').style.display = 'block';
@@ -114,6 +164,7 @@ async function doRegister() {
     errEl.textContent = t('err_network');
     btn.disabled = false;
     btn.textContent = t('btn_register');
+    refreshCaptcha();
   }
 }
 
@@ -137,6 +188,12 @@ async function copyKey() {
 document.getElementById('agentName').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doRegister();
 });
+document.getElementById('captchaInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doRegister();
+});
+
+// 页面加载时获取验证码
+refreshCaptcha();
 </script>
 </body>
 </html>

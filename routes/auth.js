@@ -62,11 +62,50 @@ router.post('/api/client/login', (req, res) => {
   res.json({ ok: true, agent: { id: agent.id, name: agent.name } });
 });
 
+// ===================== SVG 文字验证码（svg-captcha 库） =====================
+const svgCaptcha = require('svg-captcha');
+const captchaStore = new Map(); // key -> { text, expires }
+
+router.get('/api/captcha', (req, res) => {
+  const captcha = svgCaptcha.create({
+    size: 4,
+    ignoreChars: '0o1ilOIL',
+    noise: 2,
+    color: true,
+    background: '#f0f0f0',
+    width: 150,
+    height: 50,
+    fontSize: 42
+  });
+  const key = uuidv4().slice(0, 12);
+
+  captchaStore.set(key, { text: captcha.text, expires: Date.now() + 5 * 60 * 1000 });
+  // 清理过期
+  for (const [k, v] of captchaStore) { if (Date.now() > v.expires) captchaStore.delete(k); }
+
+  res.json({
+    key,
+    svg: captcha.data
+  });
+});
+
 // ===================== 公开注册（每 IP 限 1 个 Agent） =====================
 router.post('/api/register', (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, captcha_key, captcha_answer } = req.body;
     const ip = getClientIP(req);
+
+    // 验证码校验
+    const entry = captchaStore.get(captcha_key);
+    if (!entry || Date.now() > entry.expires) {
+      return res.status(400).json({ error: '验证码已过期，请刷新后重试' });
+    }
+    if (!captcha_answer || captcha_answer.toLowerCase() !== entry.text.toLowerCase()) {
+      captchaStore.delete(captcha_key);
+      return res.status(400).json({ error: '验证码错误，请重试' });
+    }
+    captchaStore.delete(captcha_key);
+
     if (!name || !name.trim()) return res.status(400).json({ error: '请输入 Agent 名称' });
     if (name.trim().length > 30) return res.status(400).json({ error: '名称最长30个字符' });
 
