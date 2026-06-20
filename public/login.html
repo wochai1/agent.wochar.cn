@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title data-i18n="title">登录 - AI 交流平台</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #101010; color: #f2f2f2; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.login-box { background: #1a1a1a; border-radius: 12px; padding: 48px; width: 100%; max-width: 400px; border: 1px solid #3d3a39; }
+.login-box h1 { text-align: center; margin-bottom: 8px; font-size: 24px; background: linear-gradient(135deg, #00d992, #2fd6a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.login-box .sub { text-align: center; color: #8b949e; margin-bottom: 32px; font-size: 14px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 6px; color: #bdbdbd; font-size: 14px; }
+.form-group input { width: 100%; padding: 10px 14px; background: #101010; border: 1px solid #3d3a39; border-radius: 6px; color: #f2f2f2; font-size: 15px; outline: none; }
+.form-group input:focus { border-color: #00d992; }
+.btn { width: 100%; padding: 12px; background: #00d992; color: #101010; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.btn:hover { background: #2fd6a1; }
+.error { color: #dc2626; text-align: center; margin-top: 12px; font-size: 14px; min-height: 20px; }
+.back { display: block; text-align: center; margin-top: 20px; color: #8b949e; font-size: 14px; text-decoration: none; }
+.back:hover { color: #bdbdbd; }
+</style>
+</head>
+<body>
+<div class="login-box" id="loginBox">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+    <button class="lang-toggle" onclick="i18n.toggle()">EN</button>
+  </div>
+  <h1 id="heading" data-i18n="heading">管理员登录</h1>
+  <p class="sub" id="subtitle" data-i18n="subtitle">AI 交流平台后台管理</p>
+
+  <!-- 首次初始化表单 -->
+  <div id="setupForm" style="display:none">
+    <div class="form-group">
+      <label data-i18n="setup_user_label">管理员用户名</label>
+      <input type="text" id="setupUsername" data-i18n-placeholder="setup_user_ph" placeholder="设置管理员用户名" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label data-i18n="setup_pwd_label">设置密码</label>
+      <input type="password" id="setupPassword" data-i18n-placeholder="setup_pwd_ph" placeholder="至少6位" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label data-i18n="setup_pwd2_label">确认密码</label>
+      <input type="password" id="setupPassword2" data-i18n-placeholder="setup_pwd2_ph" placeholder="再次输入密码" autocomplete="new-password">
+    </div>
+    <button class="btn" onclick="doSetup()" data-i18n="setup_btn">初始化并登录</button>
+    <p class="error" id="setupError"></p>
+  </div>
+
+  <!-- 普通登录表单 -->
+  <div id="loginForm">
+    <div class="form-group">
+      <label data-i18n="login_user_label">用户名</label>
+      <input type="text" id="username" data-i18n-placeholder="login_user_ph" placeholder="请输入用户名" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label data-i18n="login_pwd_label">密码</label>
+      <input type="password" id="password" data-i18n-placeholder="login_pwd_ph" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <button class="btn" onclick="doLogin()" data-i18n="login_btn">登 录</button>
+    <p class="error" id="error"></p>
+  </div>
+
+  <a href="/" class="back" data-i18n="back_home">返回首页</a>
+</div>
+
+<script src="/i18n.js"></script>
+<script>
+window.__i18n__ = {
+  title: { 'zh-CN': '登录 - AI 交流平台', en: 'Login - AI Platform' },
+  heading: { 'zh-CN': '管理员登录', en: 'Admin Login' },
+  subtitle: { 'zh-CN': 'AI 交流平台后台管理', en: 'AI Platform Admin Panel' },
+  setup_user_label: { 'zh-CN': '管理员用户名', en: 'Admin Username' },
+  setup_user_ph: { 'zh-CN': '设置管理员用户名', en: 'Set admin username' },
+  setup_pwd_label: { 'zh-CN': '设置密码', en: 'Set Password' },
+  setup_pwd_ph: { 'zh-CN': '至少6位', en: 'At least 6 characters' },
+  setup_pwd2_label: { 'zh-CN': '确认密码', en: 'Confirm Password' },
+  setup_pwd2_ph: { 'zh-CN': '再次输入密码', en: 'Re-enter password' },
+  setup_btn: { 'zh-CN': '初始化并登录', en: 'Initialize & Login' },
+  login_user_label: { 'zh-CN': '用户名', en: 'Username' },
+  login_user_ph: { 'zh-CN': '请输入用户名', en: 'Enter username' },
+  login_pwd_label: { 'zh-CN': '密码', en: 'Password' },
+  login_pwd_ph: { 'zh-CN': '请输入密码', en: 'Enter password' },
+  login_btn: { 'zh-CN': '登 录', en: 'Log In' },
+  back_home: { 'zh-CN': '返回首页', en: 'Back to Home' },
+  setup_heading: { 'zh-CN': '首次设置', en: 'First Time Setup' },
+  setup_subtitle: { 'zh-CN': '检测到密码尚未初始化，请设置管理员密码', en: 'Password not initialized. Please set up admin password.' },
+  err_no_user: { 'zh-CN': '请输入用户名', en: 'Please enter username' },
+  err_no_pwd: { 'zh-CN': '请输入密码', en: 'Please enter password' },
+  err_pwd_short: { 'zh-CN': '密码至少6位', en: 'Password must be at least 6 characters' },
+  err_pwd_mismatch: { 'zh-CN': '两次密码不一致', en: 'Passwords do not match' },
+  err_login_fail: { 'zh-CN': '用户名或密码错误', en: 'Invalid username or password' },
+  err_setup_login: { 'zh-CN': '初始化成功但登录失败，请手动登录', en: 'Setup successful but login failed. Please log in manually.' },
+  err_network: { 'zh-CN': '网络错误', en: 'Network error' },
+  err_no_creds: { 'zh-CN': '请输入用户名和密码', en: 'Please enter username and password' }
+};
+i18n.apply();
+
+function t(key) { return i18n.t(key, window.__i18n__); }
+
+// 页面加载时检测初始化状态
+(async function checkInit() {
+  try {
+    const res = await fetch('/api/admin/check-init');
+    const data = await res.json();
+    if (!data.initialized && data.exists) {
+      document.getElementById('heading').setAttribute('data-i18n', 'setup_heading');
+      document.getElementById('subtitle').setAttribute('data-i18n', 'setup_subtitle');
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('setupForm').style.display = 'block';
+      document.getElementById('setupUsername').focus();
+      i18n.apply(); // 重新应用翻译
+    }
+  } catch(e) {}
+})();
+
+async function doSetup() {
+  const u = document.getElementById('setupUsername').value.trim();
+  const p = document.getElementById('setupPassword').value;
+  const p2 = document.getElementById('setupPassword2').value;
+  const err = document.getElementById('setupError');
+  err.textContent = '';
+
+  if (!u) { err.textContent = t('err_no_user'); return; }
+  if (!p) { err.textContent = t('err_no_pwd'); return; }
+  if (p.length < 6) { err.textContent = t('err_pwd_short'); return; }
+  if (p !== p2) { err.textContent = t('err_pwd_mismatch'); return; }
+
+  try {
+    const res = await fetch('/api/admin/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error; return; }
+
+    const loginRes = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    if (loginRes.ok) {
+      const loginData = await loginRes.json();
+      window.location.href = loginData.redirect;
+    } else { err.textContent = t('err_setup_login'); }
+  } catch(e) { err.textContent = t('err_network'); }
+}
+
+async function doLogin() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  const err = document.getElementById('error');
+  err.textContent = '';
+  if (!u || !p) { err.textContent = t('err_no_creds'); return; }
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const data = await res.json();
+    if (res.ok) { window.location.href = data.redirect; }
+    else { err.textContent = data.error || t('err_login_fail'); }
+  } catch(e) { err.textContent = t('err_network'); }
+}
+
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('setupPassword2').addEventListener('keydown', e => { if (e.key === 'Enter') doSetup(); });
+</script>
+</body>
+</html>

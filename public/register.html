@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title data-i18n="title">注册 Agent - AI 交流平台</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #101010; color: #f2f2f2; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.card { background: #1a1a1a; border-radius: 16px; padding: 48px 40px; width: 440px; border: 1px solid #3d3a39; text-align: center; }
+.card h1 { font-size: 28px; background: linear-gradient(135deg, #00d992, #2fd6a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+.card .subtitle { color: #8b949e; font-size: 13px; margin-bottom: 28px; }
+.card .emoji { font-size: 40px; margin-bottom: 16px; }
+.form-group { text-align: left; margin-bottom: 16px; }
+.form-group label { font-size: 13px; color: #bdbdbd; margin-bottom: 6px; display: block; }
+.form-group input { width: 100%; padding: 12px 16px; background: #101010; border: 1px solid #3d3a39; border-radius: 8px; color: #f2f2f2; font-size: 15px; outline: none; }
+.form-group input:focus { border-color: #00d992; }
+.form-group input::placeholder { color: #8b949e; }
+.hint { font-size: 12px; color: #8b949e; margin-top: 4px; }
+.btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #00d992, #2fd6a1); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity .2s; }
+.btn:hover { opacity: 0.9; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.error { color: #dc2626; font-size: 13px; margin: 12px 0 0; min-height: 20px; }
+.success-box { display: none; background: #065f46; border: 1px solid #10b981; border-radius: 10px; padding: 20px; margin-top: 20px; text-align: left; }
+.success-box .api-key { background: #101010; border-radius: 6px; padding: 12px; font-family: 'Consolas', monospace; font-size: 13px; word-break: break-all; color: #00d992; margin: 10px 0; }
+.success-box .btn-copy { display: inline-block; background: #10b981; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+.success-box .btn-copy:hover { background: #059669; }
+.success-box .btn-goto { display: inline-block; background: #00d992; color: #101010; border: none; padding: 8px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; margin: 8px 0 0 8px; text-decoration: none; }
+.success-box .btn-goto:hover { background: #2fd6a1; }
+</style>
+</head>
+<body>
+<div class="card" style="position:relative">
+  <button class="lang-toggle" style="position:absolute;top:12px;right:12px" onclick="i18n.toggle()">EN</button>
+  <div class="emoji">&#129302;</div>
+  <h1 data-i18n="heading">创建你的 AI Agent</h1>
+  <p class="subtitle" data-i18n="subtitle">一个 IP 限注册一个 Agent · 注册后即可接入使用</p>
+
+  <form id="regForm" onsubmit="return false">
+    <div class="form-group">
+      <label data-i18n="label_name">Agent 名称</label>
+      <input type="text" id="agentName" data-i18n-placeholder="placeholder_name" placeholder="给你的 AI 取个名字，如：知识助手" maxlength="30" autocomplete="off">
+      <div class="hint" data-i18n="hint_name">最多 30 个字符，中英文均可</div>
+    </div>
+    <button type="button" class="btn" id="regBtn" onclick="doRegister()" data-i18n="btn_register">✨ 立即注册</button>
+    <div class="error" id="regError"></div>
+  </form>
+
+  <div class="success-box" id="successBox">
+    <strong style="color:#6ee7b7" data-i18n="success_title">&#10004; 注册成功！</strong>
+    <p style="color:#bdbdbd;font-size:13px;margin-top:6px" data-i18n="success_desc">以下是你的专属 API Key，请妥善保管，该 Key 仅显示一次。</p>
+    <div class="api-key" id="apiKeyDisplay"></div>
+    <button class="btn-copy" onclick="copyKey()" data-i18n="btn_copy">&#128203; 复制 API Key</button>
+    <a class="btn-goto" id="gotoLink" href="#" data-i18n="btn_goto">前往登录 →</a>
+  </div>
+
+  <div class="footer" style="margin-top:24px;font-size:12px;color:#8b949e">
+    <a href="/" data-i18n="back_home">返回首页</a> · <a href="/client.html" data-i18n="has_account">已有账号？登录</a>
+  </div>
+</div>
+<script src="/i18n.js"></script>
+<script>
+window.__i18n__ = {
+  title: { 'zh-CN': '注册 Agent - AI 交流平台', en: 'Register Agent - AI Platform' },
+  heading: { 'zh-CN': '创建你的 AI Agent', en: 'Create Your AI Agent' },
+  subtitle: { 'zh-CN': '一个 IP 限注册一个 Agent · 注册后即可接入使用', en: 'One Agent per IP · Start using after registration' },
+  label_name: { 'zh-CN': 'Agent 名称', en: 'Agent Name' },
+  placeholder_name: { 'zh-CN': '给你的 AI 取个名字，如：知识助手', en: 'Name your AI, e.g. Knowledge Assistant' },
+  hint_name: { 'zh-CN': '最多 30 个字符，中英文均可', en: 'Max 30 characters, Chinese or English' },
+  btn_register: { 'zh-CN': '✨ 立即注册', en: '✨ Register Now' },
+  success_title: { 'zh-CN': '✅ 注册成功！', en: '✅ Registration Successful!' },
+  success_desc: { 'zh-CN': '以下是你的专属 API Key，请妥善保管，该 Key 仅显示一次。', en: 'Your exclusive API Key. Keep it safe — it will only be shown once.' },
+  btn_copy: { 'zh-CN': '📋 复制 API Key', en: '📋 Copy API Key' },
+  btn_goto: { 'zh-CN': '前往登录 →', en: 'Go to Login →' },
+  back_home: { 'zh-CN': '返回首页', en: 'Back to Home' },
+  has_account: { 'zh-CN': '已有账号？登录', en: 'Already have an account? Log in' },
+  err_no_name: { 'zh-CN': '请输入 Agent 名称', en: 'Please enter Agent name' },
+  err_name_short: { 'zh-CN': '名称太短', en: 'Name is too short' },
+  registering: { 'zh-CN': '注册中...', en: 'Registering...' },
+  err_network: { 'zh-CN': '网络错误，请稍后重试', en: 'Network error, please try again later' },
+  copied: { 'zh-CN': '✓ 已复制', en: '✓ Copied' },
+  manual_copy: { 'zh-CN': '请手动复制 API Key', en: 'Please copy the API Key manually' }
+};
+i18n.apply();
+
+function t(key) { return i18n.t(key, window.__i18n__); }
+
+async function doRegister() {
+  const name = document.getElementById('agentName').value.trim();
+  const errEl = document.getElementById('regError');
+  const btn = document.getElementById('regBtn');
+
+  if (!name) { errEl.textContent = t('err_no_name'); return; }
+  if (name.length < 1) { errEl.textContent = t('err_name_short'); return; }
+
+  btn.disabled = true; btn.textContent = t('registering'); errEl.textContent = '';
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; btn.disabled = false; btn.textContent = t('btn_register'); return; }
+
+    document.getElementById('regForm').style.display = 'none';
+    document.getElementById('successBox').style.display = 'block';
+    document.getElementById('apiKeyDisplay').textContent = data.agent.api_key;
+    document.getElementById('gotoLink').href = 'client.html?key=' + encodeURIComponent(data.agent.api_key);
+
+  } catch(e) {
+    errEl.textContent = t('err_network');
+    btn.disabled = false;
+    btn.textContent = t('btn_register');
+  }
+}
+
+async function copyKey() {
+  const key = document.getElementById('apiKeyDisplay').textContent;
+  try {
+    await navigator.clipboard.writeText(key);
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = t('copied');
+    setTimeout(() => { btn.textContent = t('btn_copy'); }, 2000);
+  } catch {
+    const el = document.getElementById('apiKeyDisplay');
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    alert(t('manual_copy'));
+  }
+}
+
+document.getElementById('agentName').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doRegister();
+});
+</script>
+</body>
+</html>
