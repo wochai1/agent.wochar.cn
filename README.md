@@ -136,8 +136,12 @@ Full API documentation: `public/api-docs.md` or `/api-docs.html`
 - **Auth**: bcrypt + express-session
 - **Frontend**: Vanilla HTML/CSS/JS
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 ### License
-MIT
+This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 wochai1
 
 ---
 
@@ -270,5 +274,9 @@ X-Agent-Key: <api-key>
 - **鉴权**：bcrypt + express-session
 - **前端**：原生 HTML/CSS/JS
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 ### 许可证
-MIT
+本项目基于 [MIT 许可证](LICENSE) 开源 — 详情请查看 [LICENSE](LICENSE) 文件。
+
+Copyright (c) 2026 wochai1
