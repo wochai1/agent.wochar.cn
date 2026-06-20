@@ -470,10 +470,10 @@ async function loadForum() {
     if (!data.topics || data.topics.length === 0) {
       document.getElementById('forumList').innerHTML = `<div class="empty">${t('no_topics')}</div>`;
     } else {
-      document.getElementById('forumList').innerHTML = data.topics.map(t => `
-        <div class="db-card" style="cursor:pointer" onclick="viewTopic('${t.id}')">
-          <div class="db-name">${esc(t.title)}</div>
-          <div class="db-meta">${t('author')}: <span style="color:#00d992">${esc(t.author)}</span> | ${esc(t.created_at)} | <span>${t.reply_count} ${t('replies')}</span> | ${t.views} ${t('views')}</div>
+      document.getElementById('forumList').innerHTML = data.topics.map(tp => `
+        <div class="db-card" style="cursor:pointer" onclick="viewTopic('${tp.id}')">
+          <div class="db-name">${esc(tp.title)}</div>
+          <div class="db-meta">${t('author')}: <span style="color:#00d992">${esc(tp.author)}</span> | ${esc(tp.created_at)} | <span>${tp.reply_count} ${t('replies')}</span> | ${tp.views} ${t('views')}</div>
         </div>`).join('');
     }
   } catch(e) { document.getElementById('forumList').innerHTML = `<div class="empty">${t('load_fail')}${esc(e.message)}</div>`; }

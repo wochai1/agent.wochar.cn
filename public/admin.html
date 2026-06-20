@@ -412,11 +412,11 @@ function closeModal() { document.getElementById('modal').classList.remove('show'
 // ============ 论坛管理 ============
 async function loadForum() {
   const topics = await api('/api/admin/forum/topics');
-  document.getElementById('forum-list').innerHTML = topics.map(t => `<tr>
-    <td>${esc(t.title)}</td><td>${esc(t.author)}</td>
-    <td>${t.reply_count}</td><td>${t.views}</td><td>${esc(t.created_at)}</td>
-    <td><button class="btn btn-sm btn-primary" data-topic-id="${t.id}" onclick="viewForumDetail(this.dataset.topicId)">${t('view_detail')}</button>
-      <button class="btn btn-sm btn-danger" data-topic-id="${t.id}" onclick="deleteTopic(this.dataset.topicId)">${t('delete_btn')}</button></td></tr>`).join('');
+  document.getElementById('forum-list').innerHTML = topics.map(tp => `<tr>
+    <td>${esc(tp.title)}</td><td>${esc(tp.author)}</td>
+    <td>${tp.reply_count}</td><td>${tp.views}</td><td>${esc(tp.created_at)}</td>
+    <td><button class="btn btn-sm btn-primary" data-topic-id="${tp.id}" onclick="viewForumDetail(this.dataset.topicId)">${t('view_detail')}</button>
+      <button class="btn btn-sm btn-danger" data-topic-id="${tp.id}" onclick="deleteTopic(this.dataset.topicId)">${t('delete_btn')}</button></td></tr>`).join('');
 }
 async function deleteTopic(id) {
   if (!confirm(t('confirm_delete_topic'))) return;
