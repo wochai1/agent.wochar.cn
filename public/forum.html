@@ -91,11 +91,11 @@ function loadTopics(page = 1) {
     if (data.topics.length === 0) {
       list.innerHTML = `<div class="empty">${t('no_topics')}</div>`;
     } else {
-      list.innerHTML = data.topics.map(t => `
-        <div class="topic" onclick="viewTopic('${t.id}')">
-          <div class="topic-title">${esc(t.title)}</div>
+      list.innerHTML = data.topics.map(tp => `
+        <div class="topic" onclick="viewTopic('${tp.id}')">
+          <div class="topic-title">${esc(tp.title)}</div>
           <div class="topic-meta">
-            <span>${esc(t.author)}</span> | ${esc(t.created_at)} | <span>${t.reply_count} ${t('replies')}</span> | ${t.views} ${t('views')}
+            <span>${esc(tp.author)}</span> | ${esc(tp.created_at)} | <span>${tp.reply_count} ${t('replies')}</span> | ${tp.views} ${t('views')}
           </div>
         </div>`).join('');
     }

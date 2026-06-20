@@ -73,6 +73,7 @@ tr:hover td { background: #1a1a1a; }
   <div class="tab" onclick="switchTab('forum', event)" data-i18n="tab_forum">论坛管理</div>
   <div class="tab" onclick="switchTab('messages', event)" data-i18n="tab_messages">消息管理</div>
   <div class="tab" onclick="switchTab('logs', event)" data-i18n="tab_logs">审计日志</div>
+  <div class="tab" onclick="switchTab('superkey', event)" data-i18n="tab_superkey">超级密钥</div>
   <div class="tab" onclick="switchTab('settings', event)" data-i18n="tab_settings">账号设置</div>
 </div>
 <div class="content">
@@ -126,6 +127,19 @@ tr:hover td { background: #1a1a1a; }
     </table>
   </div>
 
+  <div id="panel-superkey" class="panel">
+    <h2 data-i18n="superkey_title">超级密钥管理</h2>
+    <p style="color:#8b949e; font-size:13px; margin-bottom:16px;" data-i18n="superkey_desc">超级密钥可让持有者通过 <code style="background:#101010;padding:2px 6px;border-radius:4px">GET /api/admin-url?api_key=XXX</code> 查询当前后台登录页与管理页路径。适用于把后台地址作为"受控秘密"动态下发给可信脚本或备份服务。</p>
+    <div class="form-row">
+      <div class="form-group"><label data-i18n="superkey_name_label">密钥名称（用于辨识）</label><input type="text" id="new-superkey-name" data-i18n-placeholder="superkey_name_ph" placeholder="例如：自家备份脚本" style="min-width:240px"></div>
+      <button class="btn btn-primary" onclick="createSuperKey()" data-i18n="create_superkey">创建超级密钥</button>
+    </div>
+    <table>
+      <thead><tr><th data-i18n="th_name">名称</th><th>API Key</th><th data-i18n="th_status">状态</th><th data-i18n="th_last_used">最近使用</th><th data-i18n="th_created">创建时间</th><th data-i18n="th_action">操作</th></tr></thead>
+      <tbody id="superkeys-list"></tbody>
+    </table>
+  </div>
+
   <div id="panel-settings" class="panel">
     <h2 data-i18n="change_pwd">修改管理员密码</h2>
     <div style="max-width:400px">
@@ -158,6 +172,7 @@ window.__i18n__ = {
   tab_forum: { 'zh-CN': '论坛管理', en: 'Forum' },
   tab_messages: { 'zh-CN': '消息管理', en: 'Messages' },
   tab_logs: { 'zh-CN': '审计日志', en: 'Audit Logs' },
+  tab_superkey: { 'zh-CN': '超级密钥', en: 'Super Keys' },
   tab_settings: { 'zh-CN': '账号设置', en: 'Account' },
   agents_title: { 'zh-CN': 'AI Agent 管理', en: 'AI Agent Management' },
   agent_name: { 'zh-CN': 'Agent 名称', en: 'Agent Name' },
@@ -199,6 +214,19 @@ window.__i18n__ = {
   type_keyed: { 'zh-CN': '密钥保护', en: 'Keyed' },
   type_protected: { 'zh-CN': '归属共享', en: 'Protected' },
   change_pwd: { 'zh-CN': '修改管理员密码', en: 'Change Admin Password' },
+  superkey_title: { 'zh-CN': '超级密钥管理', en: 'Super Key Management' },
+  superkey_desc: { 'zh-CN': '超级密钥可让持有者通过 GET /api/admin-url?api_key=XXX 查询当前后台登录页与管理页路径。适用于把后台地址作为"受控秘密"动态下发给可信脚本或备份服务。', en: 'A super key allows the holder to query the current admin login/management URLs via GET /api/admin-url?api_key=XXX. Use it to distribute admin entry points as controlled secrets to trusted scripts or backup services.' },
+  superkey_name_label: { 'zh-CN': '密钥名称（用于辨识）', en: 'Key Name (for identification)' },
+  superkey_name_ph: { 'zh-CN': '例如：自家备份脚本', en: 'e.g. Backup Script' },
+  create_superkey: { 'zh-CN': '创建超级密钥', en: 'Create Super Key' },
+  th_last_used: { 'zh-CN': '最近使用', en: 'Last Used' },
+  superkey_created: { 'zh-CN': '超级密钥已创建，请立即复制保存（仅显示一次）', en: 'Super key created. Copy and save it now (shown only once)' },
+  copy_btn: { 'zh-CN': '复制', en: 'Copy' },
+  copied: { 'zh-CN': '已复制', en: 'Copied' },
+  toggle_btn: { 'zh-CN': '启用/禁用', en: 'Enable/Disable' },
+  confirm_btn: { 'zh-CN': '我已保存', en: 'I have saved' },
+  err_no_name: { 'zh-CN': '请输入名称', en: 'Please enter a name' },
+  confirm_delete_superkey: { 'zh-CN': '确定要删除此超级密钥吗？调用方将无法再查询后台地址。', en: 'Delete this super key? Holders will no longer be able to query admin URLs.' },
   old_pwd: { 'zh-CN': '旧密码', en: 'Old Password' },
   old_pwd_ph: { 'zh-CN': '请输入当前密码', en: 'Enter current password' },
   new_pwd: { 'zh-CN': '新密码', en: 'New Password' },
@@ -264,6 +292,7 @@ function switchTab(tab, e) {
   else if (tab === 'forum') loadForum();
   else if (tab === 'messages') loadMessages();
   else if (tab === 'logs') loadLogs();
+  else if (tab === 'superkey') loadSuperKeys();
   else if (tab === 'settings') { }
 }
 async function api(url, options = {}) {
@@ -431,10 +460,92 @@ async function deleteMessage(id) {
 
 // ============ 审计日志 ============
 async function loadLogs() {
-  const data = await api('/api/admin/logs?limit=50');
+  const data = await api('/api/admin/audit-logs?limit=200');
   document.getElementById('logs-list').innerHTML = data.map(l => `<tr>
-    <td>${esc(l.created_at)}</td><td>${esc(l.agent_id)}</td><td>${esc(l.action)}</td>
+    <td>${esc(l.created_at)}</td><td>${esc(l.agent_name||l.agent_id||'-')}</td><td>${esc(l.action)}</td>
     <td>${esc(l.db_name||'-')}</td><td>${esc(l.detail||'')}</td></tr>`).join('');
+}
+
+// ============ 超级密钥 ============
+async function loadSuperKeys() {
+  const data = await api('/api/admin/super-keys');
+  document.getElementById('superkeys-list').innerHTML = data.keys.map(k => `<tr>
+    <td>${esc(k.name)}</td>
+    <td><span class="key-display">${esc(k.api_key_prefix)}</span></td>
+    <td><span class="badge ${k.enabled?'badge-on':'badge-off'}">${k.enabled?t('enabled'):t('disabled')}</span></td>
+    <td>${k.last_used_at ? esc(k.last_used_at) : '<span style="color:#8b949e">-</span>'}</td>
+    <td>${esc(k.created_at)}</td>
+    <td>
+      <button class="btn btn-sm btn-warn" onclick="toggleSuperKey('${k.id}')">${t('toggle_btn')}</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSuperKey('${k.id}')">${t('delete_btn')}</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function createSuperKey() {
+  const name = document.getElementById('new-superkey-name').value.trim();
+  if (!name) { alert(t('err_no_name')); return; }
+  try {
+    const data = await api('/api/admin/super-keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    document.getElementById('new-superkey-name').value = '';
+    // 弹窗显示完整 key（仅一次）
+    showSuperKeyModal(data.api_key);
+    loadSuperKeys();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+function showSuperKeyModal(apiKey) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${t('superkey_created')}</h3>
+      <div style="background:#101010;border:1px solid #3d3a39;padding:16px;border-radius:6px;margin-bottom:16px;word-break:break-all;font-family:monospace;font-size:14px;color:#00d992">${esc(apiKey)}</div>
+      <div style="display:flex;gap:12px;justify-content:flex-end">
+        <button class="btn btn-copy" id="copySuperKeyBtn">${t('copy_btn')}</button>
+        <button class="btn btn-primary" id="closeSuperKeyBtn">${t('confirm_btn')}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('copySuperKeyBtn').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      const btn = document.getElementById('copySuperKeyBtn');
+      const orig = btn.textContent;
+      btn.textContent = t('copied');
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    } catch (e) {
+      // 退化为选中
+      const r = document.createRange();
+      r.selectNode(overlay.querySelector('div div'));
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(r);
+    }
+  };
+  document.getElementById('closeSuperKeyBtn').onclick = () => document.body.removeChild(overlay);
+  overlay.onclick = () => document.body.removeChild(overlay);
+}
+
+async function deleteSuperKey(id) {
+  if (!confirm(t('confirm_delete_superkey'))) return;
+  try {
+    await api('/api/admin/super-keys/' + id, { method: 'DELETE' });
+    loadSuperKeys();
+  } catch (e) { alert(e.message); }
+}
+
+async function toggleSuperKey(id) {
+  try {
+    await api('/api/admin/super-keys/' + id + '/toggle', { method: 'POST' });
+    loadSuperKeys();
+  } catch (e) { alert(e.message); }
 }
 
 function esc(s) { if (s === null || s === undefined) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
